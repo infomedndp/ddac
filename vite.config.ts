@@ -11,6 +11,7 @@ export default defineConfig({
     extensions: ['.js', '.jsx', '.ts', '.tsx']
   },
   server: {
+    port: 3000,
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
@@ -33,5 +34,8 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', 'firebase/app', 'firebase/auth', 'firebase/firestore']
+  },
+  esbuild: {
+    logOverride: { 'this-is-undefined-in-esm': 'silent' }
   }
 });
