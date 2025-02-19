@@ -50,12 +50,19 @@ function AppContent() {
                             location.pathname !== '/admin/auth' &&
                             !location.pathname.startsWith('/admin/');
     
+    const navigationState = location.state as { 
+      selecting?: boolean; 
+      companyId?: string; 
+      timestamp?: number;
+      source?: string;
+    } | null;
+    
     console.log('Route protection check:', { 
       isProtectedRoute, 
       selectedId: selectedCompanyId, 
       pathname: location.pathname,
       loading,
-      state: location.state
+      state: navigationState
     });
 
     // Only redirect if:
@@ -64,13 +71,21 @@ function AppContent() {
     // 3. We're trying to access a protected route
     // 4. We're not in the middle of selecting a company
     // 5. We're not in the process of navigating with state
+    // 6. We're not coming from the home page
     if (!loading && 
         !selectedCompanyId && 
         isProtectedRoute && 
-        !location.state?.selecting && 
-        !location.state?.timestamp) {
+        !navigationState?.selecting && 
+        !navigationState?.timestamp &&
+        navigationState?.source !== 'home') {
       console.log('No company selected for protected route, redirecting to home');
-      navigate('/', { replace: true });
+      navigate('/', { 
+        replace: true,
+        state: { 
+          redirected: true,
+          timestamp: Date.now()
+        }
+      });
     }
   }, [selectedCompanyId, location.pathname, loading, navigate, location.state]);
 

@@ -250,7 +250,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         setSelectedId(null);
         setCompanyData(initialCompanyData);
         setLoading(false);
-        return;
+        return null;
       }
 
       const companyRef = doc(db, 'companies', id);
@@ -262,13 +262,13 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
 
       const data = docSnap.data();
       
-      // Update last accessed first
+      // Update last accessed timestamp
       await updateDoc(companyRef, {
         lastAccessed: new Date().toISOString()
       });
 
-      // Batch state updates together
-      const newCompanyData = {
+      // Create a new company data object with all required fields
+      const newCompanyData: CompanyData = {
         transactions: Array.isArray(data.transactions) ? data.transactions : [],
         accounts: Array.isArray(data.accounts) ? data.accounts : [defaultUncategorizedAccount],
         categoryRules: Array.isArray(data.categoryRules) ? data.categoryRules : [],
@@ -291,20 +291,20 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         }
       };
 
-      // Use a Promise to ensure both state updates complete
-      await Promise.all([
-        new Promise<void>(resolve => {
-          setSelectedId(id);
-          resolve();
-        }),
-        new Promise<void>(resolve => {
-          setCompanyData(newCompanyData);
-          resolve();
-        })
-      ]);
+      // Set company data first
+      await new Promise<void>(resolve => {
+        setCompanyData(newCompanyData);
+        setTimeout(resolve, 100); // Small delay to ensure state update
+      });
 
-      // Add an additional delay to ensure state updates are processed
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Then set selected ID
+      await new Promise<void>(resolve => {
+        setSelectedId(id);
+        setTimeout(resolve, 100); // Small delay to ensure state update
+      });
+
+      // Add a final delay to ensure all state updates are processed
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       console.log('Company selection completed successfully for ID:', id);
       return id;
