@@ -19,7 +19,7 @@ import { AdminDashboard } from './pages/admin/Dashboard';
 import { Users } from './pages/admin/Users';
 import { Practices } from './pages/admin/Practices';
 import { AuthProvider } from './context/AuthContext';
-import { CompanyProvider } from './context/CompanyContext';
+import { CompanyProvider, useCompany } from './context/CompanyContext';
 import { PrivateRoute } from './components/PrivateRoute';
 import { ZealCheck } from './components/tools/zeal-check/ZealCheck';
 import { ErrorFallback } from './components/ErrorFallback';
@@ -51,6 +51,7 @@ function ErrorFallback({ error, resetErrorBoundary }) {
 }
 
 function App() {
+  const { selectedId: selectedCompanyId } = useCompany();
   const [currentPage, setCurrentPage] = React.useState('dashboard');
   const [invoiceType, setInvoiceType] = React.useState<'in' | 'out'>('in');
 
@@ -67,18 +68,20 @@ function App() {
       <ErrorBoundary
         FallbackComponent={ErrorFallback}
         onReset={() => {
-          // Reset the state of your app here
           window.localStorage.clear();
           window.sessionStorage.clear();
         }}
       >
         <AuthProvider>
           <CompanyProvider>
-            <Suspense fallback={
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-              </div>
-            }>
+            <Suspense 
+              key={selectedCompanyId}
+              fallback={
+                <div className="min-h-screen flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+                </div>
+              }
+            >
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/auth" element={<Auth />} />
