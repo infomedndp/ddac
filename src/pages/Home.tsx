@@ -53,23 +53,16 @@ export function Home() {
       setIsSelecting(true);
       setError(null);
       
-      // First select the company and wait for initial data load
       await selectCompany(companyId);
       
-      // Wait for the snapshot listener to get initial data
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Use replace instead of push to avoid navigation stack issues
+      navigate('/dashboard', { replace: true });
       
-      // Only navigate if we're still mounted
-      if (mountedRef.current) {
-        navigate('/dashboard');
-      }
     } catch (error) {
       console.error('Error selecting company:', error);
       setError('Failed to load company data. Please try again.');
     } finally {
-      if (mountedRef.current) {
-        setIsSelecting(false);
-      }
+      setIsSelecting(false);
     }
   };
 
