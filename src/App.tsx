@@ -50,7 +50,7 @@ function ErrorFallback({ error, resetErrorBoundary }) {
   );
 }
 
-function App() {
+function AppContent() {
   const { selectedId: selectedCompanyId } = useCompany();
   const [currentPage, setCurrentPage] = React.useState('dashboard');
   const [invoiceType, setInvoiceType] = React.useState<'in' | 'out'>('in');
@@ -64,6 +64,176 @@ function App() {
   };
 
   return (
+    <Suspense 
+      key={selectedCompanyId}
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+      }
+    >
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/admin/auth" element={<AdminAuth />} />
+        
+        {/* Protected User Routes */}
+        <Route path="/dashboard" element={
+          <PrivateRoute>
+            <Layout 
+              currentPage={currentPage}
+              onNavigate={handleNavigate}
+              onInvoiceTypeChange={handleInvoiceTypeChange}
+              invoiceType={invoiceType}
+            >
+              <Dashboard />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/transactions" element={
+          <PrivateRoute>
+            <Layout 
+              currentPage={currentPage}
+              onNavigate={handleNavigate}
+              onInvoiceTypeChange={handleInvoiceTypeChange}
+              invoiceType={invoiceType}
+            >
+              <TransactionManager />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/category-rules" element={
+          <PrivateRoute>
+            <Layout 
+              currentPage={currentPage}
+              onNavigate={handleNavigate}
+              onInvoiceTypeChange={handleInvoiceTypeChange}
+              invoiceType={invoiceType}
+            >
+              <CategoryRulesPage />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/chart-of-accounts" element={
+          <PrivateRoute>
+            <Layout 
+              currentPage={currentPage}
+              onNavigate={handleNavigate}
+              onInvoiceTypeChange={handleInvoiceTypeChange}
+              invoiceType={invoiceType}
+            >
+              <ChartOfAccounts />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/reconcile" element={
+          <PrivateRoute>
+            <Layout 
+              currentPage={currentPage}
+              onNavigate={handleNavigate}
+              onInvoiceTypeChange={handleInvoiceTypeChange}
+              invoiceType={invoiceType}
+            >
+              <ReconcilePage />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/payroll" element={
+          <PrivateRoute>
+            <Layout 
+              currentPage={currentPage}
+              onNavigate={handleNavigate}
+              onInvoiceTypeChange={handleInvoiceTypeChange}
+              invoiceType={invoiceType}
+            >
+              <Payroll />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/reports" element={
+          <PrivateRoute>
+            <Layout 
+              currentPage={currentPage}
+              onNavigate={handleNavigate}
+              onInvoiceTypeChange={handleInvoiceTypeChange}
+              invoiceType={invoiceType}
+            >
+              <Reports />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/tools/file-converter" element={
+          <PrivateRoute>
+            <Layout 
+              currentPage={currentPage}
+              onNavigate={handleNavigate}
+              onInvoiceTypeChange={handleInvoiceTypeChange}
+              invoiceType={invoiceType}
+            >
+              <FileConverter />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/tools/fill-forms" element={
+          <PrivateRoute>
+            <Layout 
+              currentPage={currentPage}
+              onNavigate={handleNavigate}
+              onInvoiceTypeChange={handleInvoiceTypeChange}
+              invoiceType={invoiceType}
+            >
+              <FillForms />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/tools/zeal-check" element={
+          <PrivateRoute>
+            <Layout 
+              currentPage={currentPage}
+              onNavigate={handleNavigate}
+              onInvoiceTypeChange={handleInvoiceTypeChange}
+              invoiceType={invoiceType}
+            >
+              <ZealCheck />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/invoices-in" element={
+          <PrivateRoute>
+            <Layout 
+              currentPage={currentPage}
+              onNavigate={handleNavigate}
+              onInvoiceTypeChange={handleInvoiceTypeChange}
+              invoiceType={invoiceType}
+            >
+              <InvoiceManager type="in" />
+            </Layout>
+          </PrivateRoute>
+        } />
+        <Route path="/invoices-out" element={
+          <PrivateRoute>
+            <Layout 
+              currentPage={currentPage}
+              onNavigate={handleNavigate}
+              onInvoiceTypeChange={handleInvoiceTypeChange}
+              invoiceType={invoiceType}
+            >
+              <InvoiceManager type="out" />
+            </Layout>
+          </PrivateRoute>
+        } />
+        
+        {/* Protected Admin Routes */}
+        <Route path="/admin/dashboard" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
+        <Route path="/admin/users" element={<PrivateRoute><Users /></PrivateRoute>} />
+        <Route path="/admin/practices" element={<PrivateRoute><Practices /></PrivateRoute>} />
+      </Routes>
+    </Suspense>
+  );
+}
+
+function App() {
+  return (
     <BrowserRouter>
       <ErrorBoundary
         FallbackComponent={ErrorFallback}
@@ -74,171 +244,7 @@ function App() {
       >
         <AuthProvider>
           <CompanyProvider>
-            <Suspense 
-              key={selectedCompanyId}
-              fallback={
-                <div className="min-h-screen flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-                </div>
-              }
-            >
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/admin/auth" element={<AdminAuth />} />
-                
-                {/* Protected User Routes */}
-                <Route path="/dashboard" element={
-                  <PrivateRoute>
-                    <Layout 
-                      currentPage={currentPage}
-                      onNavigate={handleNavigate}
-                      onInvoiceTypeChange={handleInvoiceTypeChange}
-                      invoiceType={invoiceType}
-                    >
-                      <Dashboard />
-                    </Layout>
-                  </PrivateRoute>
-                } />
-                <Route path="/transactions" element={
-                  <PrivateRoute>
-                    <Layout 
-                      currentPage={currentPage}
-                      onNavigate={handleNavigate}
-                      onInvoiceTypeChange={handleInvoiceTypeChange}
-                      invoiceType={invoiceType}
-                    >
-                      <TransactionManager />
-                    </Layout>
-                  </PrivateRoute>
-                } />
-                <Route path="/category-rules" element={
-                  <PrivateRoute>
-                    <Layout 
-                      currentPage={currentPage}
-                      onNavigate={handleNavigate}
-                      onInvoiceTypeChange={handleInvoiceTypeChange}
-                      invoiceType={invoiceType}
-                    >
-                      <CategoryRulesPage />
-                    </Layout>
-                  </PrivateRoute>
-                } />
-                <Route path="/chart-of-accounts" element={
-                  <PrivateRoute>
-                    <Layout 
-                      currentPage={currentPage}
-                      onNavigate={handleNavigate}
-                      onInvoiceTypeChange={handleInvoiceTypeChange}
-                      invoiceType={invoiceType}
-                    >
-                      <ChartOfAccounts />
-                    </Layout>
-                  </PrivateRoute>
-                } />
-                <Route path="/reconcile" element={
-                  <PrivateRoute>
-                    <Layout 
-                      currentPage={currentPage}
-                      onNavigate={handleNavigate}
-                      onInvoiceTypeChange={handleInvoiceTypeChange}
-                      invoiceType={invoiceType}
-                    >
-                      <ReconcilePage />
-                    </Layout>
-                  </PrivateRoute>
-                } />
-                <Route path="/payroll" element={
-                  <PrivateRoute>
-                    <Layout 
-                      currentPage={currentPage}
-                      onNavigate={handleNavigate}
-                      onInvoiceTypeChange={handleInvoiceTypeChange}
-                      invoiceType={invoiceType}
-                    >
-                      <Payroll />
-                    </Layout>
-                  </PrivateRoute>
-                } />
-                <Route path="/reports" element={
-                  <PrivateRoute>
-                    <Layout 
-                      currentPage={currentPage}
-                      onNavigate={handleNavigate}
-                      onInvoiceTypeChange={handleInvoiceTypeChange}
-                      invoiceType={invoiceType}
-                    >
-                      <Reports />
-                    </Layout>
-                  </PrivateRoute>
-                } />
-                <Route path="/tools/file-converter" element={
-                  <PrivateRoute>
-                    <Layout 
-                      currentPage={currentPage}
-                      onNavigate={handleNavigate}
-                      onInvoiceTypeChange={handleInvoiceTypeChange}
-                      invoiceType={invoiceType}
-                    >
-                      <FileConverter />
-                    </Layout>
-                  </PrivateRoute>
-                } />
-                <Route path="/tools/fill-forms" element={
-                  <PrivateRoute>
-                    <Layout 
-                      currentPage={currentPage}
-                      onNavigate={handleNavigate}
-                      onInvoiceTypeChange={handleInvoiceTypeChange}
-                      invoiceType={invoiceType}
-                    >
-                      <FillForms />
-                    </Layout>
-                  </PrivateRoute>
-                } />
-                <Route path="/tools/zeal-check" element={
-                  <PrivateRoute>
-                    <Layout 
-                      currentPage={currentPage}
-                      onNavigate={handleNavigate}
-                      onInvoiceTypeChange={handleInvoiceTypeChange}
-                      invoiceType={invoiceType}
-                    >
-                      <ZealCheck />
-                    </Layout>
-                  </PrivateRoute>
-                } />
-                <Route path="/invoices-in" element={
-                  <PrivateRoute>
-                    <Layout 
-                      currentPage={currentPage}
-                      onNavigate={handleNavigate}
-                      onInvoiceTypeChange={handleInvoiceTypeChange}
-                      invoiceType={invoiceType}
-                    >
-                      <InvoiceManager type="in" />
-                    </Layout>
-                  </PrivateRoute>
-                } />
-                <Route path="/invoices-out" element={
-                  <PrivateRoute>
-                    <Layout 
-                      currentPage={currentPage}
-                      onNavigate={handleNavigate}
-                      onInvoiceTypeChange={handleInvoiceTypeChange}
-                      invoiceType={invoiceType}
-                    >
-                      <InvoiceManager type="out" />
-                    </Layout>
-                  </PrivateRoute>
-                } />
-                
-                {/* Protected Admin Routes */}
-                <Route path="/admin/dashboard" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
-                <Route path="/admin/users" element={<PrivateRoute><Users /></PrivateRoute>} />
-                <Route path="/admin/practices" element={<PrivateRoute><Practices /></PrivateRoute>} />
-              </Routes>
-            </Suspense>
+            <AppContent />
           </CompanyProvider>
         </AuthProvider>
       </ErrorBoundary>
