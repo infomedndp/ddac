@@ -28,7 +28,7 @@ interface CompanyContextType {
   loading: boolean;
   error: string | null;
   setLoading: (loading: boolean) => void;
-  addCompany: (name: string) => Promise<void>;
+  addCompany: (name: string) => Promise<string>;
   selectCompany: (id: string) => Promise<string | null>;
   updateCompanyData: (data: Partial<CompanyData & { id?: string }>) => Promise<void>;
   updateCompanyInfo: (info: Partial<Company>) => Promise<void>;
@@ -210,10 +210,10 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, [selectedId]);
 
-  const addCompany = async (name: string) => {
+  const addCompany = async (name: string): Promise<string> => {
     if (!user) {
       setError('User not authenticated');
-      return;
+      throw new Error('User not authenticated');
     }
 
     try {
@@ -226,7 +226,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         name,
         createdAt: new Date().toISOString(),
         lastAccessed: new Date().toISOString(),
-        bankAccounts: [] // Initialize empty bank accounts array
+        bankAccounts: []
       };
 
       const companyRef = doc(db, 'companies', companyId);

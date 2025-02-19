@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { ErrorBoundary } from 'react-error-boundary';
+import { ErrorBoundary, FallbackProps } from 'react-error-boundary';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { TransactionManager } from './components/transactions/TransactionManager';
@@ -22,11 +22,31 @@ import { AuthProvider } from './context/AuthContext';
 import { CompanyProvider, useCompany } from './context/CompanyContext';
 import { PrivateRoute } from './components/PrivateRoute';
 import { ZealCheck } from './components/tools/zeal-check/ZealCheck';
-import { ErrorFallback as ImportedErrorFallback } from './components/ErrorFallback';
 
-function CustomErrorFallback({ error, resetErrorBoundary }) {
+function CustomErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   const navigate = useNavigate();
-  // ... rest of your error fallback code
+  
+  const handleReset = () => {
+    resetErrorBoundary();
+    navigate('/');
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="max-w-xl w-full bg-white shadow-lg rounded-lg p-8">
+        <h2 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h2>
+        <pre className="text-sm bg-gray-100 p-4 rounded mb-4 overflow-auto">
+          {error.message}
+        </pre>
+        <button
+          onClick={handleReset}
+          className="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700"
+        >
+          Try again
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function AppContent() {
@@ -286,22 +306,28 @@ function AppContent() {
   );
 }
 
+function ErrorBoundaryWrapper() {
+  return (
+    <ErrorBoundary
+      FallbackComponent={CustomErrorFallback}
+      onReset={() => {
+        window.localStorage.clear();
+        window.sessionStorage.clear();
+      }}
+    >
+      <AuthProvider>
+        <CompanyProvider>
+          <AppContent />
+        </CompanyProvider>
+      </AuthProvider>
+    </ErrorBoundary>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
-      <ErrorBoundary
-        FallbackComponent={CustomErrorFallback}
-        onReset={() => {
-          window.localStorage.clear();
-          window.sessionStorage.clear();
-        }}
-      >
-        <AuthProvider>
-          <CompanyProvider>
-            <AppContent />
-          </CompanyProvider>
-        </AuthProvider>
-      </ErrorBoundary>
+      <ErrorBoundaryWrapper />
     </BrowserRouter>
   );
 }
