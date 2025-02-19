@@ -56,12 +56,11 @@ export function Home() {
 
   const handleSwitchCompany = async () => {
     try {
-      await selectCompany('');
-      // Clear any cached data
-      setCompanyData(initialCompanyData);
-      // Add a small delay
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Navigate first
       navigate('/');
+      // Then clear company data
+      await selectCompany('');
+      setCompanyData(initialCompanyData);
     } catch (error) {
       console.error('Error switching company:', error);
     }
