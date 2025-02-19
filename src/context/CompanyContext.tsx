@@ -85,23 +85,36 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
 
   // Network status monitoring
   React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     const handleOnline = async () => {
-      setIsOffline(false);
-      await enableNetwork(db);
+      try {
+        setIsOffline(false);
+        await enableNetwork(db);
+      } catch (error) {
+        console.error('Error enabling network:', error);
+      }
     };
 
     const handleOffline = async () => {
-      setIsOffline(true);
-      await disableNetwork(db);
+      try {
+        setIsOffline(true);
+        await disableNetwork(db);
+      } catch (error) {
+        console.error('Error disabling network:', error);
+      }
     };
 
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    // Check if window exists before adding listeners
+    if (window) {
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
 
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
   }, []);
 
   // Companies subscription
