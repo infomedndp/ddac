@@ -47,17 +47,14 @@ export function Home() {
       setIsSelecting(true);
       setError(null);
       
-      // First select the company
       await selectCompany(companyId);
-      
-      // Wait for data to be loaded
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Check if we have company data before navigating
-      if (!companyData) {
+      if (!companyData || Object.keys(companyData).length === 0) {
         throw new Error('Company data not loaded');
       }
       
+      console.log('Company data loaded:', companyData);
       navigate('/dashboard');
     } catch (error) {
       console.error('Error selecting company:', error);
