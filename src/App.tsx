@@ -101,20 +101,14 @@ function AppContent() {
         path="/dashboard" 
         element={
           <PrivateRoute>
-            {!selectedCompanyId || !companyData ? (
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-              </div>
-            ) : (
-              <Layout 
-                currentPage={currentPage}
-                onNavigate={setCurrentPage}
-                onInvoiceTypeChange={setInvoiceType}
-                invoiceType={invoiceType}
-              >
-                <Dashboard />
-              </Layout>
-            )}
+            <Layout 
+              currentPage={currentPage}
+              onNavigate={setCurrentPage}
+              onInvoiceTypeChange={setInvoiceType}
+              invoiceType={invoiceType}
+            >
+              <Dashboard />
+            </Layout>
           </PrivateRoute>
         } 
       />

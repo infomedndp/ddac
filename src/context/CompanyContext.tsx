@@ -170,9 +170,8 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
 
     const companyRef = doc(db, 'companies', selectedId);
     
-    const unsubscribe = onSnapshot(companyRef, async (doc) => {
+    const unsubscribe = onSnapshot(companyRef, (doc) => {
       if (!doc.exists()) return;
-      
       const data = doc.data();
       setCompanyData({
         transactions: Array.isArray(data.transactions) ? data.transactions : [],
@@ -288,7 +287,28 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       const unsubscribe = onSnapshot(companyRef, (doc) => {
         if (!doc.exists()) return;
         const data = doc.data();
-        setCompanyData(/* your data setting logic */);
+        setCompanyData({
+          transactions: Array.isArray(data.transactions) ? data.transactions : [],
+          accounts: Array.isArray(data.accounts) ? data.accounts : [defaultUncategorizedAccount],
+          categoryRules: Array.isArray(data.categoryRules) ? data.categoryRules : [],
+          customers: Array.isArray(data.customers) ? data.customers : [],
+          vendors: Array.isArray(data.vendors) ? data.vendors : [],
+          invoices: Array.isArray(data.invoices) ? data.invoices : [],
+          bankAccounts: Array.isArray(data.bankAccounts) ? data.bankAccounts : [],
+          payroll: {
+            employees: Array.isArray(data.payroll?.employees) ? data.payroll.employees : [],
+            contractors: Array.isArray(data.payroll?.contractors) ? data.payroll.contractors : [],
+            payrollRuns: Array.isArray(data.payroll?.payrollRuns) ? data.payroll.payrollRuns : []
+          },
+          workManagement: {
+            tasks: Array.isArray(data.workManagement?.tasks) ? data.workManagement.tasks : [],
+            documents: Array.isArray(data.workManagement?.documents) ? data.workManagement.documents : [],
+            overview: data.workManagement?.overview || {}
+          },
+          tools: {
+            zealCheck: data.tools?.zealCheck || { documents: [], webhookUrl: '' }
+          }
+        });
       });
 
       setUnsubscribeCompanyData(() => unsubscribe);
