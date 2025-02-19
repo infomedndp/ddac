@@ -36,6 +36,7 @@ function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isClient, setIsClient] = React.useState(false);
+  const navigationAttempted = React.useRef(false);
 
   React.useEffect(() => {
     setIsClient(true);
@@ -46,7 +47,8 @@ function AppContent() {
     loading, 
     pathname: location.pathname,
     hasCompanyData: !!companyData,
-    isClient
+    isClient,
+    navigationAttempted: navigationAttempted.current
   });
 
   // Protect routes and handle redirects
@@ -70,16 +72,20 @@ function AppContent() {
       selectedId: selectedCompanyId, 
       pathname: location.pathname,
       loading,
-      state: navigationState
+      state: navigationState,
+      navigationAttempted: navigationAttempted.current
     });
 
+    // Only redirect if we haven't already attempted navigation
     if (!loading && 
         !selectedCompanyId && 
         isProtectedRoute && 
         !navigationState?.selecting && 
         !navigationState?.timestamp &&
-        navigationState?.source !== 'home') {
+        navigationState?.source !== 'home' &&
+        !navigationAttempted.current) {
       console.log('No company selected for protected route, redirecting to home');
+      navigationAttempted.current = true;
       navigate('/', { 
         replace: true,
         state: { 
@@ -89,6 +95,11 @@ function AppContent() {
       });
     }
   }, [selectedCompanyId, location.pathname, loading, navigate, location.state, isClient]);
+
+  // Reset navigation attempt flag when location changes
+  React.useEffect(() => {
+    navigationAttempted.current = false;
+  }, [location.pathname]);
 
   if (!isClient) {
     return null; // Return null for SSR to avoid hydration mismatch

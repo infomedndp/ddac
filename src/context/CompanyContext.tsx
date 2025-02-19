@@ -29,7 +29,7 @@ interface CompanyContextType {
   error: string | null;
   setLoading: (loading: boolean) => void;
   addCompany: (name: string) => Promise<void>;
-  selectCompany: (id: string) => Promise<void>;
+  selectCompany: (id: string) => Promise<string | null>;
   updateCompanyData: (data: Partial<CompanyData & { id?: string }>) => Promise<void>;
   updateCompanyInfo: (info: Partial<Company>) => Promise<void>;
 }
@@ -246,7 +246,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const selectCompany = async (id: string) => {
+  const selectCompany = async (id: string): Promise<string | null> => {
     try {
       console.log('Starting company selection with ID:', id);
       setLoading(true);
@@ -298,20 +298,17 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         }
       };
 
-      // Set company data first
-      await new Promise<void>(resolve => {
-        setCompanyData(newCompanyData);
-        setTimeout(resolve, 100); // Small delay to ensure state update
-      });
-
-      // Then set selected ID
-      await new Promise<void>(resolve => {
-        setSelectedId(id);
-        setTimeout(resolve, 100); // Small delay to ensure state update
-      });
-
-      // Add a final delay to ensure all state updates are processed
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Set company data and ID in a single batch
+      await Promise.all([
+        new Promise<void>(resolve => {
+          setCompanyData(newCompanyData);
+          resolve();
+        }),
+        new Promise<void>(resolve => {
+          setSelectedId(id);
+          resolve();
+        })
+      ]);
 
       console.log('Company selection completed successfully for ID:', id);
       return id;
@@ -321,7 +318,6 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       setSelectedId(null);
       setCompanyData(initialCompanyData);
       setError('Failed to select company');
-      setLoading(false);
       throw error;
     } finally {
       setLoading(false);
