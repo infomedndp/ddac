@@ -1,0 +1,6 @@
+{
+  "startCommand": "npm install && npm run dev",
+  "env": {
+    "VITE_USE_PROXY": "true"
+  }
+} 

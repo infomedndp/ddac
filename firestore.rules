@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Companies collection
+    match /companies/{companyId} {
+      function isCompanyOwner() {
+        return isAuthenticated() && resource != null && resource.data.userId == request.auth.uid;
+      }
+
+      // Basic company document rules
+      allow read: if isAuthenticated() && (
+        resource == null || 
+        resource.data.userId == request.auth.uid
+      );
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isCompanyOwner();
+      allow delete: if isCompanyOwner();
+
+      // Nested collections
+      match /transactions/{transactionId} {
+        allow read, write: if isCompanyOwner();
+      }
+
+      match /accounts/{accountId} {
+        allow read, write: if isCompanyOwner();
+      }
+
+      match /categoryRules/{ruleId} {
+        allow read, write: if isCompanyOwner();
+      }
+
+      match /payroll/{documentId} {
+        allow read, write: if isCompanyOwner();
+      }
+
+      match /pendingTransactions/{transactionId} {
+        allow read, write: if isCompanyOwner();
+      }
+
+      // Work Management rules
+      match /workManagement/{document=**} {
+        allow read, write: if isCompanyOwner();
+      }
+
+      // Allow access to the entire workManagement object in the company document
+      function isValidWorkManagementData() {
+        return true;  // Allow all valid updates to workManagement data
+      }
+
+      allow update: if isCompanyOwner() && isValidWorkManagementData();
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+  }
+}

@@ -1,0 +1,32 @@
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-full-width {
+    width: 100% !important;
+  }
+  
+  .print-break-inside-avoid {
+    break-inside: avoid;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  thead {
+    display: table-header-group;
+  }
+  
+  tr {
+    page-break-inside: avoid;
+  }
+} 
