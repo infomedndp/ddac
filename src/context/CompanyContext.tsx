@@ -302,6 +302,36 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Company not found');
       }
 
+      // Initialize company data if it doesn't exist
+      const companyData = companyDoc.data();
+      if (!companyData.accounts || !Array.isArray(companyData.accounts)) {
+        await updateDoc(companyRef, {
+          accounts: [defaultUncategorizedAccount],
+          transactions: [],
+          categoryRules: [],
+          customers: [],
+          vendors: [],
+          invoices: [],
+          bankAccounts: [],
+          payroll: {
+            employees: [],
+            contractors: [],
+            payrollRuns: []
+          },
+          workManagement: {
+            tasks: [],
+            documents: [],
+            overview: {}
+          },
+          tools: {
+            zealCheck: {
+              documents: [],
+              webhookUrl: ''
+            }
+          }
+        });
+      }
+
       await updateDoc(companyRef, {
         lastAccessed: new Date().toISOString()
       });
