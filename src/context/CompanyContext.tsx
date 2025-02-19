@@ -83,6 +83,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [unsubscribeCompanyData, setUnsubscribeCompanyData] = React.useState<(() => void) | null>(null);
+  const [isSubscribed, setIsSubscribed] = React.useState(false);
 
   // Network status monitoring
   React.useEffect(() => {
@@ -264,7 +265,13 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
 
-      // Clear existing data first
+      // Cleanup old subscription
+      if (unsubscribeCompanyData) {
+        unsubscribeCompanyData();
+        setIsSubscribed(false);
+      }
+
+      // Reset state
       setSelectedId(null);
       setCompanyData(initialCompanyData);
 
@@ -280,51 +287,43 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Company not found');
       }
 
-      // Initialize company data if it doesn't exist
-      const companyData = companyDoc.data();
-      if (!companyData.accounts || !Array.isArray(companyData.accounts)) {
-        await updateDoc(companyRef, {
-          accounts: [defaultUncategorizedAccount],
-          transactions: [],
-          categoryRules: [],
-          customers: [],
-          vendors: [],
-          invoices: [],
-          bankAccounts: [],
+      // Set up new subscription
+      const unsubscribe = onSnapshot(companyRef, (doc) => {
+        if (!doc.exists()) return;
+        
+        const data = doc.data();
+        setCompanyData({
+          transactions: Array.isArray(data.transactions) ? data.transactions : [],
+          accounts: Array.isArray(data.accounts) ? data.accounts : [defaultUncategorizedAccount],
+          categoryRules: Array.isArray(data.categoryRules) ? data.categoryRules : [],
+          customers: Array.isArray(data.customers) ? data.customers : [],
+          vendors: Array.isArray(data.vendors) ? data.vendors : [],
+          invoices: Array.isArray(data.invoices) ? data.invoices : [],
+          bankAccounts: Array.isArray(data.bankAccounts) ? data.bankAccounts : [],
           payroll: {
-            employees: [],
-            contractors: [],
-            payrollRuns: []
+            employees: Array.isArray(data.payroll?.employees) ? data.payroll.employees : [],
+            contractors: Array.isArray(data.payroll?.contractors) ? data.payroll.contractors : [],
+            payrollRuns: Array.isArray(data.payroll?.payrollRuns) ? data.payroll.payrollRuns : []
           },
           workManagement: {
-            tasks: [],
-            documents: [],
-            overview: {}
+            tasks: Array.isArray(data.workManagement?.tasks) ? data.workManagement.tasks : [],
+            documents: Array.isArray(data.workManagement?.documents) ? data.workManagement.documents : [],
+            overview: data.workManagement?.overview || {}
           },
           tools: {
-            zealCheck: {
-              documents: [],
-              webhookUrl: ''
-            }
+            zealCheck: data.tools?.zealCheck || { documents: [], webhookUrl: '' }
           }
         });
-      }
+        setIsSubscribed(true);
+      });
+
+      setUnsubscribeCompanyData(() => unsubscribe);
+      setSelectedId(id);
 
       await updateDoc(companyRef, {
         lastAccessed: new Date().toISOString()
       });
 
-      // Update companies list
-      setCompanies(prev =>
-        prev.map(company =>
-          company.id === id
-            ? { ...company, lastAccessed: new Date().toISOString() }
-            : company
-        )
-      );
-
-      // Set selected company last
-      setSelectedId(id);
     } catch (error) {
       console.error('Error selecting company:', error);
       setError('Failed to select company');

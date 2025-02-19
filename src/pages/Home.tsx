@@ -74,13 +74,17 @@ export function Home() {
 
   const handleSwitchCompany = async () => {
     try {
-      // Navigate first
-      navigate('/');
-      // Then clear company data
+      setIsSelecting(true);
+      // Clear company data first
       await selectCompany('');
-      setCompanyData(initialCompanyData);
+      // Force a small delay
+      await new Promise(resolve => setTimeout(resolve, 100));
+      // Then navigate
+      navigate('/', { replace: true });
     } catch (error) {
       console.error('Error switching company:', error);
+    } finally {
+      setIsSelecting(false);
     }
   };
 
