@@ -47,27 +47,23 @@ export function Home() {
       setIsSelecting(true);
       setError(null);
       
-      // First select the company
       await selectCompany(companyId);
       
-      // Wait for Firestore subscription to update the data
-      let attempts = 0;
-      const maxAttempts = 10;
+      // Wait for initial data load
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        if (companyData && companyData.accounts && companyData.accounts.length > 0) {
-          console.log('Company data loaded successfully:', companyData);
-          navigate('/dashboard');
-          return;
-        }
-        
-        attempts++;
-        console.log(`Waiting for company data... Attempt ${attempts}`);
+      // Check if we have valid company data
+      if (!companyData || !companyData.accounts) {
+        throw new Error('Company data not loaded properly');
       }
       
-      throw new Error('Timeout waiting for company data to load');
+      // Additional check to ensure data is properly loaded
+      if (Object.keys(companyData).length === 0) {
+        throw new Error('Company data is empty');
+      }
+      
+      console.log('Company data loaded successfully:', companyData);
+      navigate('/dashboard');
     } catch (error) {
       console.error('Error selecting company:', error);
       setError('Failed to load company data. Please try again.');

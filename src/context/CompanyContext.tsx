@@ -167,71 +167,49 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    setLoading(true);
     const companyRef = doc(db, 'companies', selectedId);
     
     const unsubscribe = onSnapshot(companyRef, 
-      (docSnapshot) => {
+      async (docSnapshot) => {
         if (docSnapshot.exists()) {
           const data = docSnapshot.data();
           
-          // Ensure Uncategorized account always exists
-          const accounts = Array.isArray(data.accounts) ? data.accounts : [];
-          const hasUncategorized = accounts.some(acc => acc.accountNumber === '00000');
-          const finalAccounts = hasUncategorized ? accounts : [defaultUncategorizedAccount, ...accounts];
-
-          // Ensure bankAccounts array exists
-          const bankAccounts = Array.isArray(data.bankAccounts) ? data.bankAccounts : [];
-
-          // Ensure workManagement is properly initialized
-          const workManagement = {
-            tasks: Array.isArray(data.workManagement?.tasks) ? data.workManagement.tasks : [],
-            documents: Array.isArray(data.workManagement?.documents) ? data.workManagement.documents : [],
-            overview: data.workManagement?.overview || {}
-          };
-
-          const tools = {
-            zealCheck: data.tools?.zealCheck || {
-              documents: [],
-              webhookUrl: ''
-            }
-          };
-
-          setCompanyData({
+          // Wait for data to be processed
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          const finalData = {
             transactions: Array.isArray(data.transactions) ? data.transactions : [],
-            accounts: finalAccounts,
+            accounts: Array.isArray(data.accounts) ? 
+              (data.accounts.some(acc => acc.accountNumber === '00000') ? 
+                data.accounts : [defaultUncategorizedAccount, ...data.accounts]) : 
+              [defaultUncategorizedAccount],
             categoryRules: Array.isArray(data.categoryRules) ? data.categoryRules : [],
             customers: Array.isArray(data.customers) ? data.customers : [],
             vendors: Array.isArray(data.vendors) ? data.vendors : [],
             invoices: Array.isArray(data.invoices) ? data.invoices : [],
-            bankAccounts: bankAccounts,
+            bankAccounts: Array.isArray(data.bankAccounts) ? data.bankAccounts : [],
             payroll: {
               employees: Array.isArray(data.payroll?.employees) ? data.payroll.employees : [],
               contractors: Array.isArray(data.payroll?.contractors) ? data.payroll.contractors : [],
               payrollRuns: Array.isArray(data.payroll?.payrollRuns) ? data.payroll.payrollRuns : []
             },
-            workManagement,
-            tools,
-          });
-          setError(null);
-        } else {
-          setCompanyData({
-            ...initialCompanyData,
             workManagement: {
-              tasks: [],
-              documents: [],
-              overview: {}
+              tasks: Array.isArray(data.workManagement?.tasks) ? data.workManagement.tasks : [],
+              documents: Array.isArray(data.workManagement?.documents) ? data.workManagement.documents : [],
+              overview: data.workManagement?.overview || {}
             },
             tools: {
-              zealCheck: {
+              zealCheck: data.tools?.zealCheck || {
                 documents: [],
                 webhookUrl: ''
               }
             }
-          });
-          setError('Company not found');
+          };
+
+          setCompanyData(finalData);
+          setError(null);
+          setLoading(false);
         }
-        setLoading(false);
       },
       (error) => {
         console.error('Error fetching company data:', error);
