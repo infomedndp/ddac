@@ -38,4 +38,15 @@ export interface CompanyData {
     contractors: any[];
     payrollRuns: any[];
   };
+  workManagement?: {
+    tasks: any[];
+    documents: any[];
+    overview: Record<string, any>;
+  };
+  tools?: {
+    zealCheck: {
+      documents: any[];
+      webhookUrl: string;
+    };
+  };
 }

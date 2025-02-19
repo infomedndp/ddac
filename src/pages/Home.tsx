@@ -58,24 +58,30 @@ export function Home() {
       // Wait for company selection to complete
       await selectCompany(companyId);
       
-      // Add a small delay to ensure state is updated
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Add a longer delay to ensure state is updated in production
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Navigate with state to indicate we're selecting a company
       navigate('/dashboard', { 
         replace: true,
         state: { 
           selecting: true,
-          companyId: companyId 
+          companyId: companyId,
+          timestamp: Date.now() // Add timestamp to force state update
         }
       });
     } catch (error) {
       console.error('Error selecting company:', error);
       setError('Failed to load company data. Please try again.');
-    } finally {
+      // Reset selection state
       setIsSelecting(false);
       setLoading(false);
+      return;
     }
+    
+    // Move these to after successful navigation
+    setIsSelecting(false);
+    setLoading(false);
   };
 
   const handleSwitchCompany = async () => {

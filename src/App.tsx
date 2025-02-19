@@ -54,12 +54,21 @@ function AppContent() {
       isProtectedRoute, 
       selectedId: selectedCompanyId, 
       pathname: location.pathname,
-      loading
+      loading,
+      state: location.state
     });
 
-    // Only redirect if we're not loading, have no company selected, and trying to access a protected route
-    // AND we're not in the middle of selecting a company (which would be indicated by a pending navigation)
-    if (!loading && !selectedCompanyId && isProtectedRoute && !location.state?.selecting) {
+    // Only redirect if:
+    // 1. We're not loading
+    // 2. We have no company selected
+    // 3. We're trying to access a protected route
+    // 4. We're not in the middle of selecting a company
+    // 5. We're not in the process of navigating with state
+    if (!loading && 
+        !selectedCompanyId && 
+        isProtectedRoute && 
+        !location.state?.selecting && 
+        !location.state?.timestamp) {
       console.log('No company selected for protected route, redirecting to home');
       navigate('/', { replace: true });
     }

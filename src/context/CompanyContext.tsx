@@ -260,18 +260,15 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Company not found');
       }
 
+      const data = docSnap.data();
+      
       // Update last accessed first
       await updateDoc(companyRef, {
         lastAccessed: new Date().toISOString()
       });
 
-      const data = docSnap.data();
-      
-      // Set states in sequence to ensure proper updates
-      setSelectedId(id);
-      
-      // Ensure all arrays are properly initialized
-      setCompanyData({
+      // Batch state updates together
+      const newCompanyData = {
         transactions: Array.isArray(data.transactions) ? data.transactions : [],
         accounts: Array.isArray(data.accounts) ? data.accounts : [defaultUncategorizedAccount],
         categoryRules: Array.isArray(data.categoryRules) ? data.categoryRules : [],
@@ -292,20 +289,35 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         tools: {
           zealCheck: data.tools?.zealCheck || { documents: [], webhookUrl: '' }
         }
-      });
+      };
 
-      // Wait for a tick to ensure state updates are processed
-      await new Promise(resolve => setTimeout(resolve, 0));
+      // Use a Promise to ensure both state updates complete
+      await Promise.all([
+        new Promise<void>(resolve => {
+          setSelectedId(id);
+          resolve();
+        }),
+        new Promise<void>(resolve => {
+          setCompanyData(newCompanyData);
+          resolve();
+        })
+      ]);
+
+      // Add an additional delay to ensure state updates are processed
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       console.log('Company selection completed successfully for ID:', id);
       return id;
     } catch (error) {
       console.error('Error in selectCompany:', error);
+      // Reset state in case of error
       setSelectedId(null);
       setCompanyData(initialCompanyData);
       setError('Failed to select company');
       setLoading(false);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
