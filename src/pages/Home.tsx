@@ -50,19 +50,18 @@ export function Home() {
 
   const handleSelectCompany = async (companyId: string) => {
     try {
-      console.log('Selecting company:', companyId);
       setIsSelecting(true);
       setError(null);
       
-      // First select the company
+      // First select the company and wait for initial data load
       await selectCompany(companyId);
       
-      // Wait for data to be properly loaded
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Wait for the snapshot listener to get initial data
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Navigate only if we're still mounted and have data
+      // Only navigate if we're still mounted
       if (mountedRef.current) {
-        navigate('/dashboard', { replace: true });
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error('Error selecting company:', error);
