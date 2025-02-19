@@ -22,32 +22,11 @@ import { AuthProvider } from './context/AuthContext';
 import { CompanyProvider, useCompany } from './context/CompanyContext';
 import { PrivateRoute } from './components/PrivateRoute';
 import { ZealCheck } from './components/tools/zeal-check/ZealCheck';
-import { ErrorFallback } from './components/ErrorFallback';
+import { ErrorFallback as ImportedErrorFallback } from './components/ErrorFallback';
 
-function ErrorFallback({ error, resetErrorBoundary }) {
+function CustomErrorFallback({ error, resetErrorBoundary }) {
   const navigate = useNavigate();
-  
-  React.useEffect(() => {
-    console.error('Error caught by boundary:', error);
-  }, [error]);
-  
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h2 className="text-xl font-semibold mb-4">Something went wrong</h2>
-        <p className="text-gray-600 mb-4">{error.message}</p>
-        <button
-          onClick={() => {
-            resetErrorBoundary();
-            navigate('/', { replace: true });
-          }}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-md"
-        >
-          Return to Home
-        </button>
-      </div>
-    </div>
-  );
+  // ... rest of your error fallback code
 }
 
 function AppContent() {
@@ -68,19 +47,23 @@ function AppContent() {
   React.useEffect(() => {
     const isProtectedRoute = location.pathname !== '/' && 
                             location.pathname !== '/auth' && 
-                            location.pathname !== '/admin/auth';
+                            location.pathname !== '/admin/auth' &&
+                            !location.pathname.startsWith('/admin/');
     
     console.log('Route protection check:', { 
       isProtectedRoute, 
       selectedId: selectedCompanyId, 
-      pathname: location.pathname 
+      pathname: location.pathname,
+      loading
     });
 
-    if (!selectedCompanyId && isProtectedRoute) {
-      console.log('Redirecting to home - no company selected');
+    // Only redirect if we're not loading, have no company selected, and trying to access a protected route
+    // AND we're not in the middle of selecting a company (which would be indicated by a pending navigation)
+    if (!loading && !selectedCompanyId && isProtectedRoute && !location.state?.selecting) {
+      console.log('No company selected for protected route, redirecting to home');
       navigate('/', { replace: true });
     }
-  }, [selectedCompanyId, location.pathname]);
+  }, [selectedCompanyId, location.pathname, loading, navigate, location.state]);
 
   if (loading) {
     console.log('AppContent loading state');
@@ -257,7 +240,7 @@ function App() {
   return (
     <BrowserRouter>
       <ErrorBoundary
-        FallbackComponent={ErrorFallback}
+        FallbackComponent={CustomErrorFallback}
         onReset={() => {
           window.localStorage.clear();
           window.sessionStorage.clear();

@@ -7,7 +7,7 @@ import { WorkManagementOverview } from '../components/workManagement/WorkManagem
 import { useNavigate } from 'react-router-dom';
 
 export function Home() {
-  const { companies, addCompany, selectCompany, loading, setCompanyData, initialCompanyData, companyData, selectedCompanyId } = useCompany();
+  const { companies = [], addCompany, selectCompany, loading, selectedId, companyData, setLoading } = useCompany();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showNewCompanyDialog, setShowNewCompanyDialog] = React.useState(false);
@@ -35,12 +35,11 @@ export function Home() {
     e.preventDefault();
     if (newCompanyName.trim()) {
       try {
-        const companyId = await addCompany(newCompanyName.trim());
+        await addCompany(newCompanyName.trim());
         setNewCompanyName('');
         setShowNewCompanyDialog(false);
         
-        // Wait for company to be created and data loaded
-        await selectCompany(companyId);
+        // Navigate to dashboard after company creation
         navigate('/dashboard');
       } catch (error) {
         console.error('Error creating company:', error);
@@ -49,20 +48,26 @@ export function Home() {
   };
 
   const handleSelectCompany = async (companyId: string) => {
+    if (isSelecting) return; // Prevent multiple selections
+
     try {
+      console.log('Starting company selection in Home:', companyId);
       setIsSelecting(true);
       setError(null);
       
       await selectCompany(companyId);
       
-      // Navigate immediately after selection
-      navigate('/dashboard', { replace: true });
-      
+      // Navigate with state to indicate we're selecting a company
+      navigate('/dashboard', { 
+        replace: true,
+        state: { selecting: true }
+      });
     } catch (error) {
       console.error('Error selecting company:', error);
       setError('Failed to load company data. Please try again.');
     } finally {
       setIsSelecting(false);
+      setLoading(false);
     }
   };
 
@@ -85,24 +90,25 @@ export function Home() {
   const filteredCompanies = React.useMemo(() => {
     if (!searchTerm) return companies;
     const term = searchTerm.toLowerCase();
-    return companies.filter(company => 
+    return (companies || []).filter(company => 
       company.name.toLowerCase().includes(term) ||
       company.taxId?.toLowerCase().includes(term) ||
       company.email?.toLowerCase().includes(term)
     );
   }, [companies, searchTerm]);
 
-  // Add this effect to monitor company selection state
+  // Remove the duplicate navigation effect
   React.useEffect(() => {
     console.log('Home component company state:', {
-      selectedId: selectedCompanyId,
+      selectedId,
       hasCompanyData: !!companyData,
       isSelecting,
       loading
     });
-  }, [selectedCompanyId, companyData, isSelecting, loading]);
+  }, [selectedId, companyData, isSelecting, loading]);
 
-  if (loading || isSelecting) {
+  // Only show loading spinner when selecting
+  if (isSelecting) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>

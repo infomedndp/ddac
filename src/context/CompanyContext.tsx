@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo, useEffect, useContext } from 'react';
 import { 
   collection, 
   doc, 
@@ -20,6 +20,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 interface CompanyContextType {
   companies: Company[];
+  selectedId: string | null;
+  selectedCompanyId: string | null;
   selectedCompany: Company | null;
   companyData: CompanyData;
   isOffline: boolean;
@@ -76,17 +78,17 @@ const initialCompanyData: CompanyData = {
 
 export function CompanyProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [companies, setCompanies] = React.useState<Company[]>([]);
-  const [selectedId, setSelectedId] = React.useState<string | null>(null);
-  const [companyData, setCompanyData] = React.useState(initialCompanyData);
-  const [isOffline, setIsOffline] = React.useState(typeof window !== 'undefined' ? !window.navigator.onLine : false);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-  const [unsubscribeCompanyData, setUnsubscribeCompanyData] = React.useState<(() => void) | null>(null);
-  const [isSubscribed, setIsSubscribed] = React.useState(false);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [companyData, setCompanyData] = useState(initialCompanyData);
+  const [isOffline, setIsOffline] = useState(typeof window !== 'undefined' ? !window.navigator.onLine : false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [unsubscribeCompanyData, setUnsubscribeCompanyData] = useState<(() => void) | null>(null);
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   // Network status monitoring
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const handleOnline = async () => {
@@ -121,7 +123,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Companies subscription
-  React.useEffect(() => {
+  useEffect(() => {
     if (!user) {
       setCompanies([]);
       setSelectedId(null);
@@ -140,24 +142,23 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         snapshot.forEach((doc) => {
           companiesList.push({ id: doc.id, ...doc.data() } as Company);
         });
+        console.log('Companies loaded:', companiesList.length);
         setCompanies(companiesList);
         setLoading(false);
       },
       (error) => {
         console.error('Error fetching companies:', error);
+        setCompanies([]);
         setError('Failed to load companies');
         setLoading(false);
-        if (!isOffline) {
-          setCompanies([]);
-        }
       }
     );
 
     return () => unsubscribe();
-  }, [user, isOffline]);
+  }, [user]);
 
   // Company data subscription
-  React.useEffect(() => {
+  useEffect(() => {
     if (unsubscribeCompanyData) {
       unsubscribeCompanyData();
     }
@@ -240,65 +241,64 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
 
   const selectCompany = async (id: string) => {
     try {
+      console.log('Starting company selection with ID:', id);
       setLoading(true);
       setError(null);
-      
-      // If clearing selection
+
       if (!id) {
+        console.log('Clearing company selection');
         setSelectedId(null);
         setCompanyData(initialCompanyData);
+        setLoading(false);
         return;
       }
 
-      // Set ID first to prevent redirect
-      setSelectedId(id);
-
       const companyRef = doc(db, 'companies', id);
       const docSnap = await getDoc(companyRef);
-      
+
       if (!docSnap.exists()) {
         throw new Error('Company not found');
       }
 
       const data = docSnap.data();
-      
-      // Set initial data
-      setCompanyData({
+      const formattedData = {
+        id: id,
+        ...data,
         transactions: Array.isArray(data.transactions) ? data.transactions : [],
-        accounts: Array.isArray(data.accounts) ? data.accounts : [defaultUncategorizedAccount],
+        accounts: Array.isArray(data.accounts) ? data.accounts : [],
         categoryRules: Array.isArray(data.categoryRules) ? data.categoryRules : [],
         customers: Array.isArray(data.customers) ? data.customers : [],
         vendors: Array.isArray(data.vendors) ? data.vendors : [],
         invoices: Array.isArray(data.invoices) ? data.invoices : [],
         bankAccounts: Array.isArray(data.bankAccounts) ? data.bankAccounts : [],
-        payroll: {
-          employees: Array.isArray(data.payroll?.employees) ? data.payroll.employees : [],
-          contractors: Array.isArray(data.payroll?.contractors) ? data.payroll.contractors : [],
-          payrollRuns: Array.isArray(data.payroll?.payrollRuns) ? data.payroll.payrollRuns : []
-        },
         workManagement: {
           tasks: Array.isArray(data.workManagement?.tasks) ? data.workManagement.tasks : [],
           documents: Array.isArray(data.workManagement?.documents) ? data.workManagement.documents : [],
           overview: data.workManagement?.overview || {}
-        },
-        tools: {
-          zealCheck: data.tools?.zealCheck || { documents: [], webhookUrl: '' }
         }
-      });
+      };
 
-      // Update last accessed
+      // Update last accessed first
       await updateDoc(companyRef, {
         lastAccessed: new Date().toISOString()
       });
 
+      // Set states synchronously
+      setSelectedId(id);
+      setCompanyData(formattedData);
+
+      // Wait for a tick to ensure state updates are processed
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      console.log('Company selection completed successfully for ID:', id);
+      return id; // Return the selected ID instead of true
     } catch (error) {
-      console.error('Error selecting company:', error);
+      console.error('Error in selectCompany:', error);
       setSelectedId(null);
       setCompanyData(initialCompanyData);
       setError('Failed to select company');
-      throw error;
-    } finally {
       setLoading(false);
+      throw error;
     }
   };
 
@@ -375,29 +375,43 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     [companies, selectedId]
   );
 
-  const value = {
+  // Debug effect to track state changes
+  useEffect(() => {
+    console.log('CompanyContext state changed:', {
+      selectedId,
+      hasData: !!companyData,
+      loading,
+      error
+    });
+  }, [selectedId, companyData, loading, error]);
+
+  // Create a stable context value with useMemo
+  const contextValue = useMemo(() => ({
     companies,
-    selectedCompany,
+    selectedId,
+    selectedCompanyId: selectedId,
     companyData,
-    isOffline,
     loading,
     error,
+    isOffline,
     setLoading,
     addCompany,
     selectCompany,
+    selectedCompany: companies.find(c => c.id === selectedId),
+    setCompanyData,
     updateCompanyData,
     updateCompanyInfo
-  };
+  }), [companies, selectedId, companyData, loading, error, isOffline]);
 
   return (
-    <CompanyContext.Provider value={value}>
+    <CompanyContext.Provider value={contextValue}>
       {children}
     </CompanyContext.Provider>
   );
 }
 
 export function useCompany() {
-  const context = React.useContext(CompanyContext);
+  const context = useContext(CompanyContext);
   if (!context) {
     throw new Error('useCompany must be used within a CompanyProvider');
   }
