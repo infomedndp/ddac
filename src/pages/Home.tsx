@@ -7,7 +7,7 @@ import { WorkManagementOverview } from '../components/workManagement/WorkManagem
 import { useNavigate } from 'react-router-dom';
 
 export function Home() {
-  const { companies, addCompany, selectCompany, loading, setCompanyData, initialCompanyData } = useCompany();
+  const { companies, addCompany, selectCompany, loading, setCompanyData, initialCompanyData, companyData } = useCompany();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showNewCompanyDialog, setShowNewCompanyDialog] = React.useState(false);
@@ -16,6 +16,7 @@ export function Home() {
   const [newCompanyName, setNewCompanyName] = React.useState('');
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isSelecting, setIsSelecting] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!user && !loading) {
@@ -43,12 +44,23 @@ export function Home() {
   const handleSelectCompany = async (companyId: string) => {
     try {
       setIsSelecting(true);
+      setError(null);
+      
+      // First select the company
       await selectCompany(companyId);
-      // Add a small delay to ensure data is loaded
-      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Wait for data to be loaded
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Check if we have company data before navigating
+      if (!companyData) {
+        throw new Error('Company data not loaded');
+      }
+      
       navigate('/dashboard');
     } catch (error) {
       console.error('Error selecting company:', error);
+      setError('Failed to load company data. Please try again.');
     } finally {
       setIsSelecting(false);
     }

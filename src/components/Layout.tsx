@@ -216,13 +216,19 @@ export function Layout({
 
   const handleSwitchCompany = async () => {
     try {
-      // Navigate first
-      navigate('/');
-      // Then clear company data
-      await selectCompany('');
+      setLoading(true);
+      // Clear company data first
       setCompanyData(initialCompanyData);
+      await selectCompany('');
+      // Add a small delay before navigation
+      await new Promise(resolve => setTimeout(resolve, 100));
+      navigate('/');
     } catch (error) {
       console.error('Error switching company:', error);
+      // If there's an error, still try to navigate home
+      navigate('/');
+    } finally {
+      setLoading(false);
     }
   };
 

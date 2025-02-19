@@ -78,7 +78,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
   const [companies, setCompanies] = React.useState<Company[]>([]);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [companyData, setCompanyData] = React.useState(initialCompanyData);
-  const [isOffline, setIsOffline] = React.useState(!window.navigator.onLine);
+  const [isOffline, setIsOffline] = React.useState(typeof window !== 'undefined' ? !window.navigator.onLine : false);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [unsubscribeCompanyData, setUnsubscribeCompanyData] = React.useState<(() => void) | null>(null);
@@ -90,7 +90,9 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     const handleOnline = async () => {
       try {
         setIsOffline(false);
-        await enableNetwork(db);
+        if (db) {
+          await enableNetwork(db);
+        }
       } catch (error) {
         console.error('Error enabling network:', error);
       }
@@ -99,22 +101,21 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     const handleOffline = async () => {
       try {
         setIsOffline(true);
-        await disableNetwork(db);
+        if (db) {
+          await disableNetwork(db);
+        }
       } catch (error) {
         console.error('Error disabling network:', error);
       }
     };
 
-    // Check if window exists before adding listeners
-    if (window) {
-      window.addEventListener('online', handleOnline);
-      window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
 
-      return () => {
-        window.removeEventListener('online', handleOnline);
-        window.removeEventListener('offline', handleOffline);
-      };
-    }
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // Companies subscription
