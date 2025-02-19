@@ -85,7 +85,7 @@ export function Layout({
   invoiceType
 }: LayoutProps) {
   const { logout, user } = useAuth();
-  const { selectedCompany, selectCompany, loading, companyData, setCompanyData } = useCompany();
+  const { selectedCompany, selectCompany, loading, setLoading, companyData, setCompanyData, initialCompanyData } = useCompany();
   const [showSettings, setShowSettings] = React.useState(false);
   const [showCompanySettings, setShowCompanySettings] = React.useState(false);
   const [showCompanyInfo, setShowCompanyInfo] = React.useState(false);
@@ -216,7 +216,6 @@ export function Layout({
 
   const handleSwitchCompany = async () => {
     try {
-      setLoading(true);
       // Clear company data first
       setCompanyData(initialCompanyData);
       await selectCompany('');
@@ -227,8 +226,6 @@ export function Layout({
       console.error('Error switching company:', error);
       // If there's an error, still try to navigate home
       navigate('/');
-    } finally {
-      setLoading(false);
     }
   };
 

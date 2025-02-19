@@ -25,6 +25,7 @@ interface CompanyContextType {
   isOffline: boolean;
   loading: boolean;
   error: string | null;
+  setLoading: (loading: boolean) => void;
   addCompany: (name: string) => Promise<void>;
   selectCompany: (id: string) => Promise<void>;
   updateCompanyData: (data: Partial<CompanyData & { id?: string }>) => Promise<void>;
@@ -405,6 +406,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     isOffline,
     loading,
     error,
+    setLoading,
     addCompany,
     selectCompany,
     updateCompanyData,
