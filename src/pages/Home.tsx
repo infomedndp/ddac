@@ -7,7 +7,7 @@ import { WorkManagementOverview } from '../components/workManagement/WorkManagem
 import { useNavigate } from 'react-router-dom';
 
 export function Home() {
-  const { companies, addCompany, selectCompany, loading, setCompanyData, initialCompanyData, companyData } = useCompany();
+  const { companies, addCompany, selectCompany, loading, setCompanyData, initialCompanyData, companyData, selectedCompanyId } = useCompany();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [showNewCompanyDialog, setShowNewCompanyDialog] = React.useState(false);
@@ -55,9 +55,13 @@ export function Home() {
       
       await selectCompany(companyId);
       
-      // Use replace instead of push to avoid navigation stack issues
-      navigate('/dashboard', { replace: true });
+      // Wait for company context to be updated
+      await new Promise(resolve => setTimeout(resolve, 100));
       
+      // Check if company is still selected before navigating
+      if (selectedCompanyId === companyId) {
+        navigate('/dashboard', { replace: true });
+      }
     } catch (error) {
       console.error('Error selecting company:', error);
       setError('Failed to load company data. Please try again.');
