@@ -22,6 +22,7 @@ import { AuthProvider } from './context/AuthContext';
 import { CompanyProvider } from './context/CompanyContext';
 import { PrivateRoute } from './components/PrivateRoute';
 import { ZealCheck } from './components/tools/zeal-check/ZealCheck';
+import { ErrorFallback } from './components/ErrorFallback';
 
 function ErrorFallback({ error, resetErrorBoundary }) {
   const navigate = useNavigate();
