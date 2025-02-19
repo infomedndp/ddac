@@ -55,12 +55,19 @@ export function Home() {
       setIsSelecting(true);
       setError(null);
       
+      // Wait for company selection to complete
       await selectCompany(companyId);
+      
+      // Add a small delay to ensure state is updated
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Navigate with state to indicate we're selecting a company
       navigate('/dashboard', { 
         replace: true,
-        state: { selecting: true }
+        state: { 
+          selecting: true,
+          companyId: companyId 
+        }
       });
     } catch (error) {
       console.error('Error selecting company:', error);

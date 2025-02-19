@@ -260,38 +260,45 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Company not found');
       }
 
-      const data = docSnap.data();
-      const formattedData = {
-        id: id,
-        ...data,
-        transactions: Array.isArray(data.transactions) ? data.transactions : [],
-        accounts: Array.isArray(data.accounts) ? data.accounts : [],
-        categoryRules: Array.isArray(data.categoryRules) ? data.categoryRules : [],
-        customers: Array.isArray(data.customers) ? data.customers : [],
-        vendors: Array.isArray(data.vendors) ? data.vendors : [],
-        invoices: Array.isArray(data.invoices) ? data.invoices : [],
-        bankAccounts: Array.isArray(data.bankAccounts) ? data.bankAccounts : [],
-        workManagement: {
-          tasks: Array.isArray(data.workManagement?.tasks) ? data.workManagement.tasks : [],
-          documents: Array.isArray(data.workManagement?.documents) ? data.workManagement.documents : [],
-          overview: data.workManagement?.overview || {}
-        }
-      };
-
       // Update last accessed first
       await updateDoc(companyRef, {
         lastAccessed: new Date().toISOString()
       });
 
-      // Set states synchronously
+      const data = docSnap.data();
+      
+      // Set states in sequence to ensure proper updates
       setSelectedId(id);
-      setCompanyData(formattedData);
+      
+      // Ensure all arrays are properly initialized
+      setCompanyData({
+        transactions: Array.isArray(data.transactions) ? data.transactions : [],
+        accounts: Array.isArray(data.accounts) ? data.accounts : [defaultUncategorizedAccount],
+        categoryRules: Array.isArray(data.categoryRules) ? data.categoryRules : [],
+        customers: Array.isArray(data.customers) ? data.customers : [],
+        vendors: Array.isArray(data.vendors) ? data.vendors : [],
+        invoices: Array.isArray(data.invoices) ? data.invoices : [],
+        bankAccounts: Array.isArray(data.bankAccounts) ? data.bankAccounts : [],
+        payroll: {
+          employees: Array.isArray(data.payroll?.employees) ? data.payroll.employees : [],
+          contractors: Array.isArray(data.payroll?.contractors) ? data.payroll.contractors : [],
+          payrollRuns: Array.isArray(data.payroll?.payrollRuns) ? data.payroll.payrollRuns : []
+        },
+        workManagement: {
+          tasks: Array.isArray(data.workManagement?.tasks) ? data.workManagement.tasks : [],
+          documents: Array.isArray(data.workManagement?.documents) ? data.workManagement.documents : [],
+          overview: data.workManagement?.overview || {}
+        },
+        tools: {
+          zealCheck: data.tools?.zealCheck || { documents: [], webhookUrl: '' }
+        }
+      });
 
       // Wait for a tick to ensure state updates are processed
       await new Promise(resolve => setTimeout(resolve, 0));
 
       console.log('Company selection completed successfully for ID:', id);
-      return id; // Return the selected ID instead of true
+      return id;
     } catch (error) {
       console.error('Error in selectCompany:', error);
       setSelectedId(null);
