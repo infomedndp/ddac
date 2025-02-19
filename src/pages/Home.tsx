@@ -50,17 +50,30 @@ export function Home() {
 
   const handleSelectCompany = async (companyId: string) => {
     try {
+      console.log('Starting company selection:', companyId);
       setIsSelecting(true);
       setError(null);
       
+      console.log('Calling selectCompany');
       await selectCompany(companyId);
+      console.log('selectCompany completed');
       
-      // Wait for company context to be updated
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Wait for company context to be fully updated
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Check if company is still selected before navigating
-      if (selectedCompanyId === companyId) {
+      console.log('Checking company selection before navigation:', {
+        selectedId: selectedCompanyId,
+        targetId: companyId,
+        hasCompanyData: !!companyData
+      });
+
+      // Only navigate if we have both the ID and data
+      if (selectedCompanyId === companyId && companyData) {
+        console.log('Navigating to dashboard');
         navigate('/dashboard', { replace: true });
+      } else {
+        console.error('Company selection failed - missing data or ID mismatch');
+        setError('Failed to load company data. Please try again.');
       }
     } catch (error) {
       console.error('Error selecting company:', error);
@@ -95,6 +108,16 @@ export function Home() {
       company.email?.toLowerCase().includes(term)
     );
   }, [companies, searchTerm]);
+
+  // Add this effect to monitor company selection state
+  React.useEffect(() => {
+    console.log('Home component company state:', {
+      selectedId: selectedCompanyId,
+      hasCompanyData: !!companyData,
+      isSelecting,
+      loading
+    });
+  }, [selectedCompanyId, companyData, isSelecting, loading]);
 
   if (loading || isSelecting) {
     return (

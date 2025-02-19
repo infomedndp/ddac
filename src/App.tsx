@@ -51,24 +51,39 @@ function ErrorFallback({ error, resetErrorBoundary }) {
 }
 
 function AppContent() {
-  const { selectedId: selectedCompanyId, loading } = useCompany();
+  const { selectedId: selectedCompanyId, loading, companyData } = useCompany();
   const [currentPage, setCurrentPage] = React.useState('dashboard');
   const [invoiceType, setInvoiceType] = React.useState<'in' | 'out'>('in');
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Add this effect to handle protected route access
+  console.log('AppContent render:', { 
+    selectedId: selectedCompanyId, 
+    loading, 
+    pathname: location.pathname,
+    hasCompanyData: !!companyData 
+  });
+
+  // Protect routes and handle redirects
   React.useEffect(() => {
     const isProtectedRoute = location.pathname !== '/' && 
                             location.pathname !== '/auth' && 
                             location.pathname !== '/admin/auth';
     
+    console.log('Route protection check:', { 
+      isProtectedRoute, 
+      selectedId: selectedCompanyId, 
+      pathname: location.pathname 
+    });
+
     if (!selectedCompanyId && isProtectedRoute) {
+      console.log('Redirecting to home - no company selected');
       navigate('/', { replace: true });
     }
   }, [selectedCompanyId, location.pathname]);
 
   if (loading) {
+    console.log('AppContent loading state');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
@@ -82,13 +97,14 @@ function AppContent() {
       <Route path="/auth" element={<Auth />} />
       <Route path="/admin/auth" element={<AdminAuth />} />
       
-      {/* Always render protected routes, but guard them with PrivateRoute */}
       <Route 
         path="/dashboard" 
         element={
           <PrivateRoute>
-            {!selectedCompanyId ? (
-              navigate('/', { replace: true })
+            {!selectedCompanyId || !companyData ? (
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+              </div>
             ) : (
               <Layout 
                 currentPage={currentPage}
