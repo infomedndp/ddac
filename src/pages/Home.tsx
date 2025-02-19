@@ -43,6 +43,7 @@ export function Home() {
 
   const handleSelectCompany = async (companyId: string) => {
     try {
+      console.log('Selecting company:', companyId);
       setIsSelecting(true);
       setError(null);
       
