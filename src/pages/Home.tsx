@@ -62,6 +62,9 @@ export function Home() {
         throw new Error('Company selection failed');
       }
 
+      // Add a small delay to ensure state is updated
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Navigate with state to indicate we're selecting a company
       navigate('/dashboard', { 
         replace: true,
@@ -75,6 +78,7 @@ export function Home() {
     } catch (error) {
       console.error('Error selecting company:', error);
       setError('Failed to load company data. Please try again.');
+    } finally {
       setIsSelecting(false);
       setLoading(false);
     }
@@ -85,10 +89,14 @@ export function Home() {
       setIsSelecting(true);
       // Clear company data first
       await selectCompany('');
-      // Force a small delay
-      await new Promise(resolve => setTimeout(resolve, 100));
-      // Then navigate
-      navigate('/', { replace: true });
+      // Navigate to home
+      navigate('/', { 
+        replace: true,
+        state: {
+          timestamp: Date.now(),
+          source: 'switch'
+        }
+      });
     } catch (error) {
       console.error('Error switching company:', error);
     } finally {

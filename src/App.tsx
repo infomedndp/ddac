@@ -37,23 +37,28 @@ function AppContent() {
   const navigate = useNavigate();
   const [isClient, setIsClient] = React.useState(false);
   const navigationAttempted = React.useRef(false);
+  const isInitialMount = React.useRef(true);
 
   React.useEffect(() => {
     setIsClient(true);
   }, []);
 
-  console.log('AppContent render:', { 
-    selectedId: selectedCompanyId, 
-    loading, 
-    pathname: location.pathname,
-    hasCompanyData: !!companyData,
-    isClient,
-    navigationAttempted: navigationAttempted.current
-  });
+  // Debug logging
+  React.useEffect(() => {
+    console.log('AppContent render:', { 
+      selectedId: selectedCompanyId, 
+      loading, 
+      pathname: location.pathname,
+      hasCompanyData: !!companyData,
+      isClient,
+      navigationAttempted: navigationAttempted.current,
+      isInitialMount: isInitialMount.current
+    });
+  }, [selectedCompanyId, loading, location.pathname, companyData, isClient]);
 
   // Protect routes and handle redirects
   React.useEffect(() => {
-    if (!isClient) return; // Don't run on server
+    if (!isClient || loading) return; // Don't run on server or while loading
 
     const isProtectedRoute = location.pathname !== '/' && 
                             location.pathname !== '/auth' && 
@@ -73,12 +78,18 @@ function AppContent() {
       pathname: location.pathname,
       loading,
       state: navigationState,
-      navigationAttempted: navigationAttempted.current
+      navigationAttempted: navigationAttempted.current,
+      isInitialMount: isInitialMount.current
     });
 
+    // Skip redirect on initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     // Only redirect if we haven't already attempted navigation
-    if (!loading && 
-        !selectedCompanyId && 
+    if (!selectedCompanyId && 
         isProtectedRoute && 
         !navigationState?.selecting && 
         !navigationState?.timestamp &&

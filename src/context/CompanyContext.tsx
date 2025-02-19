@@ -412,6 +412,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     companies,
     selectedId,
     selectedCompanyId: selectedId,
+    selectedCompany: companies.find(c => c.id === selectedId) || null,
     companyData,
     loading,
     error,
@@ -419,8 +420,6 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
     setLoading,
     addCompany,
     selectCompany,
-    selectedCompany: companies.find(c => c.id === selectedId),
-    setCompanyData,
     updateCompanyData,
     updateCompanyInfo
   }), [companies, selectedId, companyData, loading, error, isOffline]);
