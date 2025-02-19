@@ -241,25 +241,28 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
   const selectCompany = async (id: string) => {
     try {
       setLoading(true);
+      setError(null);
       
-      // If no id, clear selection
+      // If clearing selection
       if (!id) {
-        setSelectedId('');
+        setSelectedId(null);
         setCompanyData(initialCompanyData);
         return;
       }
 
+      // Set ID first to prevent redirect
+      setSelectedId(id);
+
       const companyRef = doc(db, 'companies', id);
-      
-      // Wait for initial data load
       const docSnap = await getDoc(companyRef);
+      
       if (!docSnap.exists()) {
         throw new Error('Company not found');
       }
 
       const data = docSnap.data();
       
-      // Set initial data synchronously
+      // Set initial data
       setCompanyData({
         transactions: Array.isArray(data.transactions) ? data.transactions : [],
         accounts: Array.isArray(data.accounts) ? data.accounts : [defaultUncategorizedAccount],
@@ -283,43 +286,15 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
         }
       });
 
-      // Then set up the snapshot listener
-      const unsubscribe = onSnapshot(companyRef, (doc) => {
-        if (!doc.exists()) return;
-        const data = doc.data();
-        setCompanyData({
-          transactions: Array.isArray(data.transactions) ? data.transactions : [],
-          accounts: Array.isArray(data.accounts) ? data.accounts : [defaultUncategorizedAccount],
-          categoryRules: Array.isArray(data.categoryRules) ? data.categoryRules : [],
-          customers: Array.isArray(data.customers) ? data.customers : [],
-          vendors: Array.isArray(data.vendors) ? data.vendors : [],
-          invoices: Array.isArray(data.invoices) ? data.invoices : [],
-          bankAccounts: Array.isArray(data.bankAccounts) ? data.bankAccounts : [],
-          payroll: {
-            employees: Array.isArray(data.payroll?.employees) ? data.payroll.employees : [],
-            contractors: Array.isArray(data.payroll?.contractors) ? data.payroll.contractors : [],
-            payrollRuns: Array.isArray(data.payroll?.payrollRuns) ? data.payroll.payrollRuns : []
-          },
-          workManagement: {
-            tasks: Array.isArray(data.workManagement?.tasks) ? data.workManagement.tasks : [],
-            documents: Array.isArray(data.workManagement?.documents) ? data.workManagement.documents : [],
-            overview: data.workManagement?.overview || {}
-          },
-          tools: {
-            zealCheck: data.tools?.zealCheck || { documents: [], webhookUrl: '' }
-          }
-        });
-      });
-
-      setUnsubscribeCompanyData(() => unsubscribe);
-      setSelectedId(id);
-
+      // Update last accessed
       await updateDoc(companyRef, {
         lastAccessed: new Date().toISOString()
       });
 
     } catch (error) {
       console.error('Error selecting company:', error);
+      setSelectedId(null);
+      setCompanyData(initialCompanyData);
       setError('Failed to select company');
       throw error;
     } finally {
