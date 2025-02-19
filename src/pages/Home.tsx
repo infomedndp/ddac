@@ -17,12 +17,19 @@ export function Home() {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isSelecting, setIsSelecting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const mountedRef = React.useRef(true);
 
   React.useEffect(() => {
     if (!user && !loading) {
       navigate('/auth');
     }
   }, [user, loading, navigate]);
+
+  React.useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const handleCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,28 +54,23 @@ export function Home() {
       setIsSelecting(true);
       setError(null);
       
+      // First select the company
       await selectCompany(companyId);
       
-      // Wait for initial data load
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for data to be properly loaded
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Check if we have valid company data
-      if (!companyData || !companyData.accounts) {
-        throw new Error('Company data not loaded properly');
+      // Navigate only if we're still mounted and have data
+      if (mountedRef.current) {
+        navigate('/dashboard', { replace: true });
       }
-      
-      // Additional check to ensure data is properly loaded
-      if (Object.keys(companyData).length === 0) {
-        throw new Error('Company data is empty');
-      }
-      
-      console.log('Company data loaded successfully:', companyData);
-      navigate('/dashboard');
     } catch (error) {
       console.error('Error selecting company:', error);
       setError('Failed to load company data. Please try again.');
     } finally {
-      setIsSelecting(false);
+      if (mountedRef.current) {
+        setIsSelecting(false);
+      }
     }
   };
 
