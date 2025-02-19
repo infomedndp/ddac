@@ -33,4 +33,9 @@ export interface CompanyData {
   vendors: Vendor[];
   invoices: Invoice[];
   bankAccounts?: BankAccount[];
+  payroll?: {
+    employees: any[];
+    contractors: any[];
+    payrollRuns: any[];
+  };
 }
