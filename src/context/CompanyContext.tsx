@@ -81,15 +81,22 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [companyData, setCompanyData] = useState(initialCompanyData);
-  const [isOffline, setIsOffline] = useState(typeof window !== 'undefined' ? !window.navigator.onLine : false);
+  const [isOffline, setIsOffline] = useState(false); // Initialize as false for SSR
+  const [isClient, setIsClient] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [unsubscribeCompanyData, setUnsubscribeCompanyData] = useState<(() => void) | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
 
+  // Hydration safety effect
+  useEffect(() => {
+    setIsClient(true);
+    setIsOffline(!window.navigator.onLine);
+  }, []);
+
   // Network status monitoring
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (!isClient) return; // Don't run on server
 
     const handleOnline = async () => {
       try {
@@ -120,7 +127,7 @@ export function CompanyProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [isClient]);
 
   // Companies subscription
   useEffect(() => {

@@ -28,8 +28,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [initialized, setInitialized] = React.useState(false);
+  const [isClient, setIsClient] = React.useState(false);
+
+  // Hydration safety effect
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   React.useEffect(() => {
+    if (!isClient) return; // Don't run on server
+
     const unsubscribe = onAuthStateChanged(auth, 
       (user) => {
         setUser(user);
@@ -45,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [isClient]);
 
   const clearError = () => setError(null);
 
@@ -158,13 +166,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearError
   };
 
-  // Show loading state until Firebase Auth is initialized
-  if (!initialized) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+  // Show loading state until Firebase Auth is initialized and we're on client
+  if (!isClient || !initialized) {
+    return null; // Return null for SSR to avoid hydration mismatch
   }
 
   return (

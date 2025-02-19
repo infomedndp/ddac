@@ -35,16 +35,24 @@ function AppContent() {
   const [invoiceType, setInvoiceType] = React.useState<'in' | 'out'>('in');
   const location = useLocation();
   const navigate = useNavigate();
+  const [isClient, setIsClient] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   console.log('AppContent render:', { 
     selectedId: selectedCompanyId, 
     loading, 
     pathname: location.pathname,
-    hasCompanyData: !!companyData 
+    hasCompanyData: !!companyData,
+    isClient
   });
 
   // Protect routes and handle redirects
   React.useEffect(() => {
+    if (!isClient) return; // Don't run on server
+
     const isProtectedRoute = location.pathname !== '/' && 
                             location.pathname !== '/auth' && 
                             location.pathname !== '/admin/auth' &&
@@ -65,13 +73,6 @@ function AppContent() {
       state: navigationState
     });
 
-    // Only redirect if:
-    // 1. We're not loading
-    // 2. We have no company selected
-    // 3. We're trying to access a protected route
-    // 4. We're not in the middle of selecting a company
-    // 5. We're not in the process of navigating with state
-    // 6. We're not coming from the home page
     if (!loading && 
         !selectedCompanyId && 
         isProtectedRoute && 
@@ -87,10 +88,13 @@ function AppContent() {
         }
       });
     }
-  }, [selectedCompanyId, location.pathname, loading, navigate, location.state]);
+  }, [selectedCompanyId, location.pathname, loading, navigate, location.state, isClient]);
+
+  if (!isClient) {
+    return null; // Return null for SSR to avoid hydration mismatch
+  }
 
   if (loading) {
-    console.log('AppContent loading state');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
